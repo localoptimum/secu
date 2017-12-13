@@ -5,7 +5,41 @@ VERBOSE=1
 # Initialise globals
 HITNO=0   #iterated
 DELTIME=2 #seconds
-THRESHOLD=0.018
+THRESHOLD=0.030
+
+# Identify the method to grab photos
+FOUNDSOMETHING=0
+CAPTURE=""
+
+# First test for streamer
+RUNME="which streamer"
+DIAG=$($RUNME)
+if [[ -z $DIAG ]]
+then
+    echo 'streamer not found'
+else
+    echo 'Found streamer'
+    FOUNDSOMETHING=1
+    CAPTURE="streamer -o"
+fi
+
+#preferred is fswebcam, check for that next and override
+RUNME="which fswebcam"
+DIAG=$($RUNME)
+if [[ -z $DIAG ]]
+then
+    echo 'fswebcam not found'
+else
+    echo 'Found fswebcam'
+    FOUNDSOMETHING=1
+    CAPTURE="fswebcam -d /dev/video0 -r 848x480 --jpeg 95"
+fi
+
+if [[ $FOUNDSOMETHING -eq 0 ]]
+then
+    echo "Error: no compatible capture software found.  Exiting."
+    exit
+fi
 
 # Flush temp files
 if [ -e "/tmp/ref1.jpeg" ]
@@ -38,6 +72,10 @@ echo 'Available devices: '
 
 v4l2-ctl --list-devices
 
+echo 'Setting exposure to mid range then auto'
+
+v4l2-ctl -c exposure_auto=1
+v4l2-ctl -c exposure_absolute=300
 
 function captureReferencePicture {
     if [ -e "/tmp/ref1n.jpg" ]
@@ -50,7 +88,7 @@ function captureReferencePicture {
     fi
 
     #Capture new photo
-    streamer -o /tmp/ref1.jpeg
+    $CAPTURE /tmp/ref1.jpeg
 
     #Normalise new photo
     convert /tmp/ref1.jpeg -auto-level /tmp/ref1n.jpg
@@ -84,7 +122,7 @@ function performHit {
 	then
 	    echo $FILENAME
 	fi
-	streamer -o $FILENAME
+	$CAPTURE $FILENAME
 	sleep 1
     done 
     
