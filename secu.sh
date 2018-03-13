@@ -5,7 +5,7 @@ VERBOSE=1
 # Initialise globals
 HITNO=0   #iterated
 DELTIME=2 #seconds
-THRESHOLD=0.030
+THRESHOLD=0.015
 
 # Identify the method to grab photos
 FOUNDSOMETHING=0
@@ -21,6 +21,7 @@ else
     echo 'Found streamer'
     FOUNDSOMETHING=1
     CAPTURE="streamer -o"
+    THRESHOLD=0.03
 fi
 
 #preferred is fswebcam, check for that next and override
@@ -33,6 +34,7 @@ else
     echo 'Found fswebcam'
     FOUNDSOMETHING=1
     CAPTURE="fswebcam -d /dev/video0 -r 848x480 --jpeg 95"
+    THRESHOLD=0.015
 fi
 
 if [[ $FOUNDSOMETHING -eq 0 ]]
@@ -171,6 +173,13 @@ function main {
 }
 
 
+# Wait 10 seconds for system to start
+echo 'Starting on 5'
+for i in `seq 1 5`;
+    do
+	echo $i
+	sleep 1
+    done 
 
 # Go to main loop
 main
